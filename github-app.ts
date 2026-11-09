@@ -7,6 +7,8 @@
 //   app.id                       GitHub App numeric ID
 //   app.pem                      App private key (PEM)
 //   app.<owner>.installation.id  one file per installed account
+//   app.bot.name                 optional: App login for commit identity
+//   app.bot.user.id              optional: numeric user ID of the bot
 //
 // The active installation is picked by the current repo's `origin` remote owner
 // (https or ssh); without a match the first installation (alphabetical) is used
@@ -44,7 +46,7 @@ export default function (pi: ExtensionAPI) {
   // not re-imported): a failed apply must never escape as a handler crash.
   const safeApplyIdentity = (sel: { matched?: boolean } | null) => {
     try {
-      applyBotIdentity(process.env, sel);
+      applyBotIdentity(process.env, sel, provider?.config.bot);
     } catch (e) {
       console.warn(`[ripmav-bot] identity apply failed — restart pi after extension updates: ${shortError(e)}`);
     }

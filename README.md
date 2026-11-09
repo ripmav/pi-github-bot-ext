@@ -34,9 +34,9 @@ The status line also ticks down every minute while the session is idle
 In repos that match the active installation, commits are authored and committed as
 the App's bot identity — `<bot-login>[bot]` with the noreply address
 `<user_id>+<bot-login>[bot]@users.noreply.github.com` — via `GIT_AUTHOR_*` /
-`GIT_COMMITTER_*` env vars (no git config files touched). The identity is defined
-once in `github-app-auth.mjs` (`BOT_IDENTITY`); set it to match your App.
-Elsewhere your own git identity is used. Override a single commit
+`GIT_COMMITTER_*` env vars (no git config files touched). The identity comes from
+`app.bot.name` + `app.bot.user.id` in the config dir; without both, your own git
+identity is used. Override a single commit
 with `git commit --author="Name <email>"`.
 
 Verified commit signatures are not possible for `[bot]` accounts — GitHub does not
@@ -69,6 +69,8 @@ Config dir: `~/.config/ripmav-bot` (override: `RIPMAVBOT_CONFIG_DIR`):
 app.id                       App ID (number)
 app.pem                      App private key (PEM, chmod 600)
 app.<owner>.installation.id  one file per installed account, content: installation ID
+app.bot.name                 optional: App login for commit identity ("[bot]" is appended)
+app.bot.user.id              optional: numeric user ID of the bot (noreply email)
 ```
 
 Two accounts = two files, e.g. `app.<account-1>.installation.id` and

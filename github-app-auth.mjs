@@ -6,6 +6,8 @@
 //   app.id                       GitHub App numeric ID
 //   app.pem                      App private key (PEM)
 //   app.<owner>.installation.id  one file per installed account
+//   app.bot.name                 optional: App login for commit identity
+//   app.bot.user.id              optional: numeric user ID of the bot
 //
 // Security: never logs the private key or the full token; status output is masked.
 
@@ -89,7 +91,30 @@ export function loadConfig(configDir = join(homedir(), ".config", "ripmav-bot"))
     throw new Error(`ripmav-bot config: no app.<owner>.installation.id files in ${configDir}`);
   }
   installations.sort((a, b) => a.owner.localeCompare(b.owner));
-  return { configDir, appId, privateKeyPem, installations };
+
+  // Optional bot identity for commit attribution — both files required:
+  //   app.bot.name      App login (e.g. my-bot); "[bot]" is appended if absent
+  //   app.bot.user.id   numeric user ID of the bot
+  // Email uses the documented noreply pattern
+  // <user_id>+<login>[bot]@users.noreply.github.com. Partial or invalid config
+  // warns and falls back to the user's own git identity (never fatal).
+  const readOpt = (name) => {
+    const p = join(configDir, name);
+    return existsSync(p) ? readFileSync(p, "utf8").trim() : undefined;
+  };
+  const botName = readOpt("app.bot.name");
+  const botUserId = readOpt("app.bot.user.id");
+  let bot;
+  if (botName !== undefined || botUserId !== undefined) {
+    if (!botName || !botUserId || !/^\d+$/.test(botUserId)) {
+      console.warn("ripmav-bot config: bot identity needs both app.bot.name and a numeric app.bot.user.id — commits keep your git identity");
+    } else {
+      const login = botName.endsWith("[bot]") ? botName : `${botName}[bot]`;
+      bot = { name: login, email: `${botUserId}+${login}@users.noreply.github.com` };
+    }
+  }
+
+  return { configDir, appId, privateKeyPem, installations, bot };
 }
 
 // Owner of the `origin` remote of the git repo in `cwd`, lowercased; null if
@@ -118,25 +143,18 @@ export function pickInstallation(installations, cwd) {
   return match ? { ...match, matched: true } : { ...installations[0], matched: false };
 }
 
-// Bot identity for commit attribution: author + committer as the app bot.
-// Email uses the documented noreply pattern <user_id>+<login>[bot]@… with the
-// bot's user ID (353694380) — matches the repo-local git config already in use.
-export const BOT_IDENTITY = {
-  name: "ripmav-bot[bot]",
-  email: "353694380+ripmav-bot[bot]@users.noreply.github.com",
-};
-
 const IDENTITY_ENV = ["GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"];
 
 // Set the bot identity env vars only while a matched installation selection is
-// active (the bot's token actually covers this repo); otherwise clear them so the
-// user's own git identity is used. `selection` is the ensureFor() result or null.
-export function applyBotIdentity(env, selection) {
-  if (selection?.matched) {
-    env.GIT_AUTHOR_NAME = BOT_IDENTITY.name;
-    env.GIT_AUTHOR_EMAIL = BOT_IDENTITY.email;
-    env.GIT_COMMITTER_NAME = BOT_IDENTITY.name;
-    env.GIT_COMMITTER_EMAIL = BOT_IDENTITY.email;
+// active (the bot's token actually covers this repo) and a bot identity is
+// configured; otherwise clear them so the user's own git identity is used.
+// `selection` is the ensureFor() result or null; `bot` is config.bot.
+export function applyBotIdentity(env, selection, bot) {
+  if (selection?.matched && bot) {
+    env.GIT_AUTHOR_NAME = bot.name;
+    env.GIT_AUTHOR_EMAIL = bot.email;
+    env.GIT_COMMITTER_NAME = bot.name;
+    env.GIT_COMMITTER_EMAIL = bot.email;
   } else {
     for (const k of IDENTITY_ENV) delete env[k];
   }

@@ -123,6 +123,31 @@ await check("loadConfig: missing file throws with path", () => {
   assert.throws(() => loadConfig(d2), /app\.id/);
 });
 
+await check("loadConfig: bot identity from app.bot.name + app.bot.user.id", () => {
+  const d = mkdtempSync(join(tmpdir(), "ripmav-bot-bot-"));
+  writeFileSync(join(d, "app.id"), "123\n");
+  writeFileSync(join(d, "app.pem"), pem);
+  writeFileSync(join(d, "app.foo.installation.id"), "111\n");
+  writeFileSync(join(d, "app.bot.name"), "my-bot\n");
+  writeFileSync(join(d, "app.bot.user.id"), "424242\n");
+  assert.deepEqual(loadConfig(d).bot, { name: "my-bot[bot]", email: "424242+my-bot[bot]@users.noreply.github.com" });
+  writeFileSync(join(d, "app.bot.name"), "my-bot[bot]\n"); // explicit suffix is not doubled
+  assert.equal(loadConfig(d).bot.name, "my-bot[bot]");
+});
+
+await check("loadConfig: missing or partial bot files -> no bot identity, not fatal", () => {
+  const d = mkdtempSync(join(tmpdir(), "ripmav-bot-nobot-"));
+  writeFileSync(join(d, "app.id"), "123\n");
+  writeFileSync(join(d, "app.pem"), pem);
+  writeFileSync(join(d, "app.foo.installation.id"), "111\n");
+  assert.equal(loadConfig(d).bot, undefined); // nothing configured
+  writeFileSync(join(d, "app.bot.name"), "my-bot\n");
+  assert.equal(loadConfig(d).bot, undefined); // name only
+  writeFileSync(join(d, "app.bot.user.id"), "not-a-number\n");
+  assert.equal(loadConfig(d).bot, undefined); // invalid user id
+  assert.equal(loadConfig(d).appId, "123"); // core config still loads
+});
+
 // --- repo owner resolution ---
 await check("gitRemoteOwner: https + ssh remotes, non-repo null", () => {
   assert.equal(gitRemoteOwner(repoFoo), "foo");
@@ -131,18 +156,24 @@ await check("gitRemoteOwner: https + ssh remotes, non-repo null", () => {
 });
 
 // --- bot identity env ---
-await check("applyBotIdentity: sets bot identity when matched, clears otherwise", () => {
+const BOT = { name: "ripmav-bot[bot]", email: "353694380+ripmav-bot[bot]@users.noreply.github.com" };
+
+await check("applyBotIdentity: sets bot identity when matched + configured, clears otherwise", () => {
   const env = {};
-  applyBotIdentity(env, { owner: "ripmav", installationId: "1", matched: true });
+  applyBotIdentity(env, { owner: "ripmav", installationId: "1", matched: true }, BOT);
   assert.equal(env.GIT_AUTHOR_NAME, "ripmav-bot[bot]");
   assert.equal(env.GIT_AUTHOR_EMAIL, "353694380+ripmav-bot[bot]@users.noreply.github.com");
   assert.equal(env.GIT_COMMITTER_NAME, "ripmav-bot[bot]");
   assert.equal(env.GIT_COMMITTER_EMAIL, "353694380+ripmav-bot[bot]@users.noreply.github.com");
-  applyBotIdentity(env, { owner: "ripmav", installationId: "1", matched: false });
+  applyBotIdentity(env, { owner: "ripmav", installationId: "1", matched: false }, BOT);
   for (const k of ["GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"]) {
     assert.equal(env[k], undefined);
   }
-  applyBotIdentity(env, null); // no selection -> stays cleared
+  applyBotIdentity(env, null, BOT); // no selection -> stays cleared
+  for (const k of ["GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"]) {
+    assert.equal(env[k], undefined);
+  }
+  applyBotIdentity(env, { owner: "ripmav", installationId: "1", matched: true }, undefined); // matched but no bot configured
   for (const k of ["GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"]) {
     assert.equal(env[k], undefined);
   }
@@ -154,7 +185,7 @@ await check("applyBotIdentity: real git commit is authored + committed by the bo
   writeFileSync(join(dir, "f.txt"), "x");
   const env = { ...process.env };
   for (const k of ["GIT_AUTHOR_NAME", "GIT_AUTHOR_EMAIL", "GIT_COMMITTER_NAME", "GIT_COMMITTER_EMAIL"]) delete env[k];
-  applyBotIdentity(env, { owner: "ripmav", installationId: "1", matched: true });
+  applyBotIdentity(env, { owner: "ripmav", installationId: "1", matched: true }, BOT);
   execFileSync("git", ["add", "."], { cwd: dir, env, stdio: "ignore" });
   execFileSync("git", ["commit", "-q", "-m", "test"], { cwd: dir, env, stdio: "ignore" });
   const id = execFileSync("git", ["log", "-1", "--format=%an <%ae> | %cn <%ce>"], { cwd: dir, env, encoding: "utf8" }).trim();

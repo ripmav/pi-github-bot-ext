@@ -100,6 +100,8 @@ Config-Verzeichnis (Default `~/.config/ripmav-bot`, Override: `RIPMAVBOT_CONFIG_
 app.id                       App ID (Zahl)
 app.pem                      Private Key (PEM, chmod 600)
 app.<owner>.installation.id  eine Datei pro installiertem Account, Inhalt: Installation ID (Zahl)
+app.bot.name                 optional: Bot-Login für Commit-Identität ("[bot]" wird ergänzt)
+app.bot.user.id              optional: Bot-User-ID (Zahl, für die Noreply-Email)
 ```
 
 Zwei Accounts = zwei Dateien, z. B. `app.<account1>.installation.id` und
@@ -134,8 +136,9 @@ Verhalten:
   nur letzte 4 Zeichen); **`/ghapp refresh`** — frisches Token für die aktive Auswahl erzwingen.
 - **Commit-Identität:** In Repos des aktiven Accounts (matched) setzt die Extension
   Author und Committer auf die Bot-Identität der App — `<bot-login>[bot]` /
-  `<user_id>+<bot-login>[bot]@users.noreply.github.com` — wie in
-  `github-app-auth.mjs` (`BOT_IDENTITY`) definiert; dort auf deine App setzen
+  `<user_id>+<bot-login>[bot]@users.noreply.github.com` — abgeleitet aus
+  `app.bot.name` + `app.bot.user.id` (optional; ohne beide bleibt deine eigene
+  Git-Identität unangetastet)
   (per `GIT_AUTHOR_*`/`GIT_COMMITTER_*`-Env, keine Config-Dateien). In anderen Repos
   oder ohne Bot-Token bleibt deine eigene Git-Identität unangetastet.
   Override für Einzelcommits: `git commit --author="Name <email>"`.
