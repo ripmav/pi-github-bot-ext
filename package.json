@@ -1,9 +1,34 @@
 {
   "name": "ripmav-bot",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
+  "description": "Pi extension that keeps a fresh GitHub App installation token (GH_TOKEN) for coding agents — pre-expiry refresh, per-repo installation selection, live TUI status",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "extension",
+    "github",
+    "github-app",
+    "auth",
+    "token"
+  ],
+  "license": "MIT",
+  "author": "Sebastian Burmester",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ripmav/pi-github-bot-ext.git"
+  },
+  "files": [
+    "github-app.ts",
+    "github-app-auth.mjs",
+    "self-check.mjs",
+    "github-app-setup.md"
+  ],
   "pi": {
-    "extensions": ["./github-app.ts"]
+    "extensions": [
+      "./github-app.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
   }
 }
