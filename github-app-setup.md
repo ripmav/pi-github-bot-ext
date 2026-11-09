@@ -107,14 +107,21 @@ app.bot.user.id              optional: Bot-User-ID (Zahl, für die Noreply-Email
 Zwei Accounts = zwei Dateien, z. B. `app.<account1>.installation.id` und
 `app.<account2>.installation.id`. `app.client.id` wird ignoriert.
 
-Installation:
+Installation (npm, published als [`ripmav-bot`](https://www.npmjs.com/package/ripmav-bot)):
+
+```bash
+pi install npm:ripmav-bot
+```
+
+oder aus einem Clone (Development, aktuelles `main`):
 
 ```bash
 pi install /pfad/zu/diesem-repo
 ```
 
-lädt das Repo als lokales Package ohne Kopie (entfernen: `pi remove`,
-übersicht: `pi list`). Bestehende Sessions: `/reload` oder Pi neu starten.
+(lädt das Repo als lokales Package ohne Kopie; entfernen: `pi remove`,
+übersicht: `pi list`, aktualisieren: `pi update --extensions`). Bestehende
+Sessions: `/reload` oder Pi neu starten.
 
 Verhalten:
 

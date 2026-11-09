@@ -54,11 +54,20 @@ allow registering signing keys on them.
 
 ## Install
 
+From npm (published as [`ripmav-bot`](https://www.npmjs.com/package/ripmav-bot)):
+
+```bash
+pi install npm:ripmav-bot
+```
+
+Or from a clone (development, latest `main`):
+
 ```bash
 pi install /path/to/pi-github-bot-ext
 ```
 
-Loads the repo in place — no copy (remove with `pi remove`, list with `pi list`).
+Local installs load the repo in place — no copy (remove with `pi remove`, list
+with `pi list`, update with `pi update --extensions`).
 Existing sessions: `/reload` or restart Pi.
 
 ## Configure
