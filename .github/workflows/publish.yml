@@ -35,7 +35,8 @@ jobs:
             VERSION=$(git tag --list | grep -E "$SEMVER" | sed 's/^v//' | sort -V | tail -n1)
             [ -n "$VERSION" ] || { echo "::error::no release tag found (strict semver only)"; exit 1; }
           fi
-          echo "version=$VERSION" >> "$GITHUB_ENV"
+          # uppercase: bash env vars are case-sensitive and the next step reads $VERSION
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "release version: $VERSION"
       - name: Sync package.json version
         run: |
