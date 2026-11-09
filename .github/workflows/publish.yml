@@ -20,7 +20,7 @@ jobs:
         with:
           # all tags, so a manual run can find the latest release tag
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Resolve release version
