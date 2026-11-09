@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # bump commit for the package.json version sync on main
   id-token: write
 
 jobs:
@@ -38,7 +38,23 @@ jobs:
           # uppercase: bash env vars are case-sensitive and the next step reads $VERSION
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "release version: $VERSION"
-      - name: Sync package.json version
+      - name: Sync package.json version on main
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          if [ "$CURRENT" != "$VERSION" ]; then
+            # commit the bump to the default branch, independent of the tag's commit
+            git fetch origin main --depth=1
+            git checkout -q -B version-sync origin/main
+            npm version "$VERSION" --no-git-tag-version
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -qam "chore(release): v$VERSION"
+            git push origin version-sync:main
+            git checkout -q "$GITHUB_REF_NAME" 2>/dev/null || true
+            echo "main package.json synced to $VERSION"
+          else
+            echo "main package.json already at $VERSION"
+          fi
+      - name: Set package version for publish
         run: |
           CURRENT=$(node -p "require('./package.json').version")
           if [ "$CURRENT" != "$VERSION" ]; then
