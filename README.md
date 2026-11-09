@@ -1,4 +1,4 @@
-# ripmav-bot — GitHub App auth for Pi coding agents
+# GitHub App auth for Pi coding agents
 
 A zero-dependency [Pi](https://pi.dev) extension that gives coding agents a fresh
 GitHub App installation token (`GH_TOKEN` / `GITHUB_TOKEN`) for every run — no
@@ -32,8 +32,11 @@ The status line also ticks down every minute while the session is idle
 ## Commit identity
 
 In repos that match the active installation, commits are authored and committed as
-`ripmav-bot[bot]` via `GIT_AUTHOR_*` / `GIT_COMMITTER_*` env vars (no git config
-files touched). Elsewhere your own git identity is used. Override a single commit
+the App's bot identity — `<bot-login>[bot]` with the noreply address
+`<user_id>+<bot-login>[bot]@users.noreply.github.com` — via `GIT_AUTHOR_*` /
+`GIT_COMMITTER_*` env vars (no git config files touched). The identity is defined
+once in `github-app-auth.mjs` (`BOT_IDENTITY`); set it to match your App.
+Elsewhere your own git identity is used. Override a single commit
 with `git commit --author="Name <email>"`.
 
 Verified commit signatures are not possible for `[bot]` accounts — GitHub does not
@@ -68,8 +71,8 @@ app.pem                      App private key (PEM, chmod 600)
 app.<owner>.installation.id  one file per installed account, content: installation ID
 ```
 
-Two accounts = two files, e.g. `app.ripmav.installation.id` and
-`app.other.installation.id`. Other files (e.g. `app.client.id`) are ignored.
+Two accounts = two files, e.g. `app.<account-1>.installation.id` and
+`app.<account-2>.installation.id`. Other files (e.g. `app.client.id`) are ignored.
 
 ## Commands
 

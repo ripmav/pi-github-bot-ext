@@ -1,4 +1,4 @@
-# GitHub-App `ripmav-bot` — Setup & Agent-Authentifizierung
+# GitHub App — Setup & Agent-Authentifizierung
 
 Ziel: AI-Agents arbeiten in ausgesuchten GitHub-Repos — ohne persönliche Credentials.
 Die App ist nur auf den installierten Repos wirksam, vollständig revocierbar und auditierbar.
@@ -14,7 +14,7 @@ nur auf den installierten Repos.
 
 `github.com → dein Profil → Settings → Developer settings → GitHub Apps → New GitHub App`
 
-- **Name:** `ripmav-bot`
+- **Name:** `<dein-app-name>` (z. B. `mein-bot`) — der Agent wird später als `<app-name>[bot]` auftreten
 - **Callback URL:** nicht nötig (kein OAuth — Server-to-Server)
 - **Repository permissions** (minimal, für einen Agenten der Code schreibt):
   - `Metadata` — Pflicht, wird automatisch gesetzt
@@ -74,7 +74,7 @@ Runtime-agnostisch (pi, opencode, Claude Code & Co.):
 ```bash
 export GH_TOKEN="$(node mint.mjs)"        # gh-CLI + API-Calls des Agents
 # Git direkt über HTTPS:
-git clone https://x-access-token:${GH_TOKEN}@github.com/ripmav/<repo>.git
+git clone https://x-access-token:${GH_TOKEN}@github.com/<dein-account>/<repo>.git
 ```
 
 ### Betrieb
@@ -102,13 +102,13 @@ app.pem                      Private Key (PEM, chmod 600)
 app.<owner>.installation.id  eine Datei pro installiertem Account, Inhalt: Installation ID (Zahl)
 ```
 
-Zwei Accounts = zwei Dateien, z. B. `app.ripmav.installation.id` und
-`app.sburmester.installation.id`. `app.client.id` wird ignoriert.
+Zwei Accounts = zwei Dateien, z. B. `app.<account1>.installation.id` und
+`app.<account2>.installation.id`. `app.client.id` wird ignoriert.
 
 Installation:
 
 ```bash
-pi install /home/ripmav/projects/ripmav-bot
+pi install /pfad/zu/diesem-repo
 ```
 
 lädt das Repo als lokales Package ohne Kopie (entfernen: `pi remove`,
@@ -133,7 +133,9 @@ Verhalten:
 - **`/ghapp`** — aktive Auswahl + Status aller Installationen (Token maskiert,
   nur letzte 4 Zeichen); **`/ghapp refresh`** — frisches Token für die aktive Auswahl erzwingen.
 - **Commit-Identität:** In Repos des aktiven Accounts (matched) setzt die Extension
-  Author und Committer auf `ripmav-bot[bot]` / `353694380+ripmav-bot[bot]@users.noreply.github.com`
+  Author und Committer auf die Bot-Identität der App — `<bot-login>[bot]` /
+  `<user_id>+<bot-login>[bot]@users.noreply.github.com` — wie in
+  `github-app-auth.mjs` (`BOT_IDENTITY`) definiert; dort auf deine App setzen
   (per `GIT_AUTHOR_*`/`GIT_COMMITTER_*`-Env, keine Config-Dateien). In anderen Repos
   oder ohne Bot-Token bleibt deine eigene Git-Identität unangetastet.
   Override für Einzelcommits: `git commit --author="Name <email>"`.
@@ -144,7 +146,7 @@ Verhalten:
 ## Stolpersteine
 
 - **Branch-Protection:** Gilt auch für App-Tokens. Will der Agent auf `main`
-  pushen, muss `ripmav-bot` in „Allowed to push" stehen — besser: Agenten
+  pushen, muss der Bot in „Allowed to push" stehen — besser: Agenten
   pushen nur Feature-Branches und öffnen PRs.
 - **Secret-Hygiene:** PEM + IDs nur in Env/Secret-Manager, nie im Repo
   oder in Agent-Prompts.
@@ -153,10 +155,10 @@ Verhalten:
 
 ## Checkliste
 
-- [ ] App `ripmav-bot` angelegt, Permissions gesetzt
+- [ ] App angelegt, Permissions gesetzt
 - [ ] Private Key generiert, lokal gesichert (`chmod 600`), nicht committet
 - [ ] App auf den Ziel-Repos installiert
 - [ ] App ID + Installation ID notiert
 - [ ] Token-Mint funktioniert (Extension: `node self-check.mjs` grün + `/ghapp` zeigt `token ready`; manuell: `mint.mjs` liefert `ghs_...`)
 - [ ] Agent mit `GH_TOKEN` kann klonen, pushen, PRs öffnen
-- [ ] (optional) `ripmav-bot` in Branch-Protection „Allowed to push"
+- [ ] (optional) Bot in Branch-Protection „Allowed to push"
