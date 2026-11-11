@@ -1,6 +1,6 @@
 {
   "name": "ripmav-bot",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Pi extension that keeps a fresh GitHub App installation token (GH_TOKEN) for coding agents — pre-expiry refresh, per-repo installation selection, live TUI status",
   "keywords": [
     "pi-package",
