@@ -21,11 +21,15 @@
     "github-app.ts",
     "github-app-auth.mjs",
     "self-check.mjs",
-    "github-app-setup.md"
+    "github-app-setup.md",
+    "skills/github-bot-token/SKILL.md"
   ],
   "pi": {
     "extensions": [
       "./github-app.ts"
+    ],
+    "skills": [
+      "./skills"
     ]
   },
   "peerDependencies": {
