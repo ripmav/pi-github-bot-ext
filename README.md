@@ -90,6 +90,15 @@ Two accounts = two files, e.g. `app.<account-1>.installation.id` and
 - `/ghapp` — active selection + status of all installations (token masked, last 4 chars only)
 - `/ghapp refresh` — force a new token for the active installation
 
+## Bundled skill
+
+The package ships the `github-bot-token` skill (`skills/github-bot-token/`): a
+runtime contract that keeps every GitHub communication in covered repos — gh
+CLI, git, API — on the bot's installation token instead of a personal one,
+including identity verification and the fail-closed behavior when the App is
+not installed on the current repo. Pi loads it automatically with the package;
+force it with `/skill:github-bot-token`.
+
 ## Fail-open
 
 Token problems never block an agent run: a failed mint leaves the previous token
